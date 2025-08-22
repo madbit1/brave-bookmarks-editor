@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brave Bookmarks Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 750px;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Warning Banner Styles */
+        .warning-banner {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px 30px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 3px solid rgba(255,255,255,0.2);
+        }
+
+        .warning-banner.show {
+            display: flex;
+        }
+
+        .warning-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .warning-content {
+            flex: 1;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .warning-text {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .warning-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .warning-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .warning-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .warning-btn.primary {
+            background: rgba(255,255,255,0.9);
+            color: #ee5a24;
+        }
+
+        .warning-btn.primary:hover {
+            background: white;
+        }
+
+
+
+        /* Testing Mode Banner */
+        .testing-mode-banner {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 12px 30px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .testing-mode-banner.show {
+            display: flex;
+        }
+
+        .testing-mode-banner .warning-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Help Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            opacity: 0.7;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .help-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .help-section h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2em;
+        }
+        
+        .help-section ol {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        
+        .help-section li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        
+        .help-section code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .quick-ref {
+            background: #e8f4f8;
+            border-left-color: #17a2b8;
+        }
+        
+        .quick-ref-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .ref-item {
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .ref-item.safe {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .ref-item.okay {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .ref-item.risky {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .warning-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .warning-btn.secondary:hover {
+            background: #5a6268;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 8px 0;
+            word-break: break-all;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #856404;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 60px;
+        }
+
+        // ... existing code ...
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: none;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .controls.show {
+            display: flex;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1;
+            top: 100%;
+            right: 0;
+            margin-top: 2px;
+        }
+
+        .export-dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border-radius: 8px;
+            margin: 4px;
+        }
+
+        .export-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .export-dropdown:hover .export-dropdown-content,
+        .export-dropdown-content:hover {
+            display: block;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: none;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .stats.show {
+            display: flex;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .bookmarks-container {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .bookmark-tree {
+            list-style: none;
+        }
+
+        .bookmark-item {
+            margin-bottom: 8px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .bookmark-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+
+        .bookmark-item.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .bookmark-info {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bookmark-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .bookmark-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bookmark-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        .bookmark-url {
+            color: #667eea;
+            font-size: 0.85rem;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .bookmark-url:hover {
+            text-decoration: underline;
+        }
+
+        .bookmark-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+
+        .bookmark-folder {
+            border-left: 3px solid #667eea;
+        }
+
+        .bookmark-folder.collapsed .folder-contents {
+            display: none;
+        }
+
+        .folder-contents {
+            margin-left: 20px;
+            margin-top: 10px;
+            padding-left: 15px;
+            border-left: 2px solid #eee;
+        }
+
+        .edit-form {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            display: none;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .edit-form.show {
+            display: flex;
+        }
+
+        .edit-form input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .edit-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .edit-form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .drag-over {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-section {
+                padding: 30px 20px;
+            }
+
+            .controls {
+                padding: 15px 20px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: auto;
+                margin-bottom: 10px;
+            }
+
+            .stats {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .bookmarks-container {
+                padding: 20px;
+            }
+
+            .bookmark-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .bookmark-actions {
+                align-self: flex-end;
+            }
+
+            .folder-contents {
+                margin-left: 10px;
+                padding-left: 10px;
+            }
+
+            .warning-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .warning-actions {
+                justify-content: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                max-height: 85vh;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .help-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .quick-ref-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔖 Brave Bookmarks Editor</h1>
+            <p>Edit, organize, and export your Brave browser bookmarks</p>
+        </div>
+
+        <!-- Brave Sync Warning Banner -->
+        <div id="syncWarningBanner" class="warning-banner">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-content">
+                <div class="warning-title">🛡️ Bookmark Safety Warning</div>
+                <div class="warning-text">
+                    <strong>Cannot detect Brave sync status from bookmarks file.</strong><br>
+                    If Brave Sync is enabled, deleted bookmarks may be automatically restored.
+                    <br><br>
+                    <strong>🚫 To Prevent Auto-Restoration:</strong>
+                    <ol style="margin: 10px 0; padding-left: 20px; text-align: left;">
+                        <li><strong>Safest:</strong> Export bookmarks as HTML → Edit → Import back</li>
+                        <li><strong>Alternative:</strong> Disable Brave Sync at <code>brave://settings/braveSync</code></li>
+                        <li><strong>Safe Testing:</strong> Use Testing Mode below (recommended)</li>
+                    </ol>
+                    <small>⚡ <strong>Quick Access:</strong> Type <code>brave://settings/braveSync</code> in Brave's address bar</small>
+                </div>
+            </div>
+            <div class="warning-actions">
+                <button class="warning-btn" onclick="editor.dismissSyncWarning()">I Understand</button>
+                <button class="warning-btn primary" onclick="editor.enableTestingMode()">🛡️ Safe Mode</button>
+                <button class="warning-btn secondary" onclick="editor.showSyncHelp()">📖 Detailed Guide</button>
+                <button onclick="showBackupManagement()" class="btn btn-secondary" title="Manage Brave Backups">
+                    🗂️ Backup Management
+                </button>
+                <button class="warning-btn primary" onclick="showFutureUpgrades()">🚀 Coming Soon</button>
+            </div>
+        </div>
+
+        <!-- Testing Mode Banner -->
+        <div id="testingModeBanner" class="testing-mode-banner">
+            <div class="warning-icon">🧪</div>
+            <div class="warning-content">
+                <div class="warning-title">Testing Mode Active</div>
+                <div class="warning-text">
+                    Automatic backup created. Changes are being tracked for safe testing.
+                </div>
+            </div>
+            <div class="warning-actions">
+                <button class="warning-btn" onclick="editor.disableTestingMode()">Disable Testing Mode</button>
+            </div>
+        </div>
+
+        <!-- Help Modal for Sync Prevention -->
+        <div id="syncHelpModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🛡️ How to Prevent Brave Backup Interference</h2>
+                    <span class="close" onclick="editor.closeSyncHelp()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="help-section">
+                        <h3>🥇 Method 1: Export-Edit-Import (Safest)</h3>
+                        <ol>
+                            <li>In Brave: Go to <code>brave://bookmarks/</code></li>
+                            <li>Click ⋮ (three dots) → "Export bookmarks"</li>
+                            <li>Save as HTML file</li>
+                            <li>Edit the HTML file (not live bookmarks)</li>
+                            <li>Import back: ⋮ → "Import bookmarks"</li>
+                        </ol>
+                        <p><strong>✅ Pros:</strong> Zero risk, works regardless of sync status</p>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h3>🔧 Method 2: Disable Brave Sync</h3>
+                        <ol>
+                            <li>Open Brave browser</li>
+                            <li>Go to <code>brave://settings/braveSync</code></li>
+                            <li>Click "Leave Sync Chain" or "Reset Sync"</li>
+                            <li>Confirm the action</li>
+                            <li>Now safe to edit bookmarks directly</li>
+                        </ol>
+                        <p><strong>✅ Pros:</strong> Complete protection<br>
+                        <strong>❌ Cons:</strong> Loses sync across devices</p>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h3>🧪 Method 3: Testing Mode (This App)</h3>
+                        <ol>
+                            <li>Click "Use Testing Mode" above</li>
+                            <li>Automatic backup will be created</li>
+                            <li>Edit safely in isolated environment</li>
+                            <li>Export results when satisfied</li>
+                        </ol>
+                        <p><strong>✅ Pros:</strong> Safe experimentation, keeps sync intact</p>
+                    </div>
+                    
+                    <div class="help-section quick-ref">
+                        <h3>📋 Quick Reference</h3>
+                        <div class="quick-ref-grid">
+                            <div class="ref-item safe">✅ SAFEST: Export → Edit → Import</div>
+                            <div class="ref-item safe">✅ SAFE: Disable Brave Sync first</div>
+                            <div class="ref-item okay">✅ OKAY: Use Testing Mode</div>
+                            <div class="ref-item risky">❌ RISKY: Edit live bookmarks with sync enabled</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="editor.closeSyncHelp()">Got It!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backup Management Modal -->
+        <div id="backupManagementModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🗂️ Brave Backup Management</h2>
+                    <span class="close" onclick="closeBackupManagement()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="help-section">
+                        <h3>🔧 Access Brave Sync Settings</h3>
+                        <p>Open Brave and navigate to:</p>
+                        <div class="code-block">brave://settings/braveSync</div>
+                        <p>Or manually: <strong>Menu → Settings → Sync</strong></p>
+                        
+                        <h4>Quick Actions:</h4>
+                        <ul>
+                            <li><strong>Disable Sync:</strong> Turn off "Sync everything" toggle</li>
+                            <li><strong>Disable Bookmarks Only:</strong> Turn off just "Bookmarks" under "Choose what to sync"</li>
+                            <li><strong>Remove Device:</strong> Click "Manage devices" → Remove specific devices</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>📁 Backup File Locations</h3>
+                        <p><strong>Windows:</strong></p>
+                        <div class="code-block">%LOCALAPPDATA%\BraveSoftware\Brave-Browser\User Data\Default\</div>
+                        
+                        <p><strong>macOS:</strong></p>
+                        <div class="code-block">~/Library/Application Support/BraveSoftware/Brave-Browser/Default/</div>
+                        
+                        <p><strong>Linux:</strong></p>
+                        <div class="code-block">~/.config/BraveSoftware/Brave-Browser/Default/</div>
+                        
+                        <p><strong>Key Files:</strong></p>
+                        <ul>
+                            <li><code>Bookmarks</code> - Main bookmarks file</li>
+                            <li><code>Bookmarks.bak</code> - Automatic backup</li>
+                            <li><code>Sync Data/</code> - Sync-related files</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>🧹 Backup Cleanup</h3>
+                        <p><strong>⚠️ Always close Brave first!</strong></p>
+                        <ol>
+                            <li>Close all Brave windows completely</li>
+                            <li>Navigate to the backup location above</li>
+                            <li>Optional: Delete <code>Bookmarks.bak</code> to prevent auto-restoration</li>
+                            <li>Optional: Clear <code>Sync Data/</code> folder if disabling sync</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong>⚠️ Backup First:</strong> Always create a manual backup before deleting any files!
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>🔄 Sync Troubleshooting</h3>
+                        <p><strong>If bookmarks keep getting restored:</strong></p>
+                        <ol>
+                            <li>Disable sync on ALL devices</li>
+                            <li>Wait 5-10 minutes for sync to stop</li>
+                            <li>Edit bookmarks on one device</li>
+                            <li>Re-enable sync if desired</li>
+                        </ol>
+                        
+                        <p><strong>Reset Sync Chain:</strong></p>
+                        <ol>
+                            <li>Go to <code>brave://settings/braveSync</code></li>
+                            <li>Click "Reset Sync"</li>
+                            <li>Set up sync again with desired devices</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeBackupManagement()" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Future Upgrades Modal -->
+        <div id="futureUpgradesModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🚀 Upcoming Features</h2>
+                    <span class="close" onclick="closeFutureUpgrades()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="help-section">
+                        <h3>🎨 Enhanced Interface</h3>
+                        <ul>
+                            <li><strong>🌙 Dark/Light Theme Toggle</strong> - Switch between themes</li>
+                            <li><strong>🔍 Search & Filter</strong> - Find bookmarks instantly</li>
+                            <li><strong>🎯 Bulk Operations</strong> - Select multiple bookmarks</li>
+                            <li><strong>🖱️ Drag & Drop Reordering</strong> - Visual organization</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>🔧 Advanced Tools</h3>
+                        <ul>
+                            <li><strong>🔍 Duplicate Detection</strong> - Find and merge duplicates</li>
+                            <li><strong>🔗 Broken Link Checker</strong> - Test URL validity</li>
+                            <li><strong>📁 Smart Categories</strong> - Auto-organize by content</li>
+                            <li><strong>📊 Usage Analytics</strong> - Most/least visited bookmarks</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>🛡️ Enhanced Safety</h3>
+                        <ul>
+                            <li><strong>⏪ Version History</strong> - Undo/redo changes</li>
+                            <li><strong>🔄 Smart Sync</strong> - Intelligent conflict resolution</li>
+                            <li><strong>⏰ Scheduled Backups</strong> - Automatic exports</li>
+                            <li><strong>👁️ Change Preview</strong> - See modifications before saving</li>
+                        </ul>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>🌐 Import/Export</h3>
+                        <ul>
+                            <li><strong>🦊 Firefox Import</strong> - Direct bookmark import</li>
+                            <li><strong>🌐 Chrome Import</strong> - Cross-browser compatibility</li>
+                            <li><strong>📄 Custom Templates</strong> - Personalized HTML exports</li>
+                            <li><strong>☁️ Cloud Backup</strong> - Optional cloud storage</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>🗳️ Vote for Features:</strong> Which features would you like to see first? Let us know!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="closeFutureUpgrades()">Exciting!</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>Select Brave Bookmarks File</h3>
+                <p>Choose your Brave bookmarks file (usually named "Bookmarks")</p>
+                <input type="file" id="fileInput" accept=".json,*" style="display: none;">
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+                <div class="file-info">
+                    <p><strong>Typical locations:</strong></p>
+                    <p><strong>Windows:</strong> <code>%LOCALAPPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Bookmarks</code></p>
+                    <p><strong>macOS:</strong> <code>~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Bookmarks</code></p>
+                    <p><strong>Linux:</strong> <code>~/.config/BraveSoftware/Brave-Browser/Default/Bookmarks</code></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search bookmarks...">
+            <button class="btn btn-secondary" onclick="editor.expandAll()">Expand All</button>
+            <button class="btn btn-secondary" onclick="editor.collapseAll()">Collapse All</button>
+            <button class="btn btn-warning" onclick="editor.sortBookmarks()">Sort A-Z</button>
+            
+            <div class="export-dropdown">
+                <button class="btn btn-success">Export ▼</button>
+                <div class="export-dropdown-content">
+                    <a href="#" onclick="editor.exportBookmarks('json')">📄 Export as JSON</a>
+                    <a href="#" onclick="editor.exportBookmarks('html')">🌐 Export as HTML</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalBookmarks">0</span>
+                <div class="stat-label">Total Bookmarks</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalFolders">0</span>
+                <div class="stat-label">Folders</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalUrls">0</span>
+                <div class="stat-label">URLs</div>
+            </div>
+        </div>
+
+        <div class="bookmarks-container" id="bookmarksContainer">
+            <div id="bookmarksList"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 15px; margin-top: 40px; border-top: 1px solid #f0f0f0; color: #666; font-size: 0.8em;">
+        <p style="margin: 0;">Made by <a href="https://github.com/madbit1" target="_blank" style="color: #2196f3; text-decoration: none;">madbit1</a> • Open Source</p>
+    </footer>
+
+    <script>
+        class BraveBookmarksEditor {
+            constructor() {
+                this.bookmarksData = null;
+                this.testingMode = false;
+                this.originalBookmarksBackup = null;
+                this.syncWarningDismissed = false;
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                const fileInput = document.getElementById('fileInput');
+                const searchBox = document.getElementById('searchBox');
+                const uploadArea = document.getElementById('uploadArea');
+
+                fileInput.addEventListener('change', (e) => this.loadBookmarksFile(e));
+                searchBox.addEventListener('input', (e) => this.searchBookmarks(e.target.value));
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('drag-over');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('drag-over');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('drag-over');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.processFile(files[0]);
+                    }
+                });
+
+                // Close modal when clicking outside
+                window.addEventListener('click', (e) => {
+                    const modal = document.getElementById('syncHelpModal');
+                    if (e.target === modal) {
+                        this.closeSyncHelp();
+                    }
+                });
+            }
+
+            // Brave Sync Detection and Warning Methods
+            detectBraveSyncStatus() {
+                // Since we can't directly access Brave's sync status from a web page,
+                // we'll show the warning by default when bookmarks are loaded
+                // Users can dismiss it if they know their sync status
+                if (!this.syncWarningDismissed && !this.testingMode) {
+                    this.showSyncWarning();
+                }
+            }
+
+            showSyncWarning() {
+                const banner = document.getElementById('syncWarningBanner');
+                banner.classList.add('show');
+            }
+
+            hideSyncWarning() {
+                const banner = document.getElementById('syncWarningBanner');
+                banner.classList.remove('show');
+            }
+
+            dismissSyncWarning() {
+                this.syncWarningDismissed = true;
+                this.hideSyncWarning();
+            }
+
+            // Testing Mode Methods
+            enableTestingMode() {
+                this.testingMode = true;
+                this.createAutomaticBackup();
+                this.hideSyncWarning();
+                this.showTestingModeBanner();
+                console.log('Testing Mode enabled - automatic backup created');
+            }
+
+            disableTestingMode() {
+                this.testingMode = false;
+                this.originalBookmarksBackup = null;
+                this.hideTestingModeBanner();
+                console.log('Testing Mode disabled');
+            }
+
+            showTestingModeBanner() {
+                const banner = document.getElementById('testingModeBanner');
+                banner.classList.add('show');
+            }
+
+            hideTestingModeBanner() {
+                const banner = document.getElementById('testingModeBanner');
+                banner.classList.remove('show');
+            }
+
+            showSyncHelp() {
+                document.getElementById('syncHelpModal').style.display = 'block';
+            }
+
+            closeSyncHelp() {
+                document.getElementById('syncHelpModal').style.display = 'none';
+            }
+
+            createAutomaticBackup() {
+                if (this.bookmarksData) {
+                    // Create a deep copy of the current bookmarks data
+                    this.originalBookmarksBackup = JSON.parse(JSON.stringify(this.bookmarksData));
+                    
+                    // Also create a downloadable backup file
+                    const backupData = JSON.parse(JSON.stringify(this.bookmarksData));
+                    if (backupData.checksum) {
+                        delete backupData.checksum;
+                    }
+                    
+                    const dataStr = JSON.stringify(backupData, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `brave-bookmarks-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            loadBookmarksFile(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.processFile(file);
+                }
+            }
+
+            processFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        this.bookmarksData = JSON.parse(e.target.result);
+                        this.renderBookmarks();
+                        this.calculateStats();
+                        this.showControls();
+                        
+                        // Detect Brave sync status and show warning if needed
+                        this.detectBraveSyncStatus();
+                        
+                    } catch (error) {
+                        alert('Error parsing bookmarks file. Please make sure it\'s a valid Brave bookmarks file.');
+                        console.error('Parse error:', error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // ... existing code ...
+
+            renderBookmarks() {
+                const container = document.getElementById('bookmarksList');
+                container.innerHTML = '';
+
+                if (!this.bookmarksData || !this.bookmarksData.roots) {
+                    container.innerHTML = '<p>No bookmarks data found.</p>';
+                    return;
+                }
+
+                const tree = document.createElement('ul');
+                tree.className = 'bookmark-tree';
+
+                // Render each root folder
+                Object.entries(this.bookmarksData.roots).forEach(([key, root]) => {
+                    if (root.children && root.children.length > 0) {
+                        const rootElement = this.createRootElement(key, root);
+                        tree.appendChild(rootElement);
+                    }
+                });
+
+                container.appendChild(tree);
+            }
+
+            createRootElement(key, root) {
+                const li = document.createElement('li');
+                li.className = 'bookmark-item bookmark-folder';
+                li.dataset.id = root.id || key;
+
+                const info = document.createElement('div');
+                info.className = 'bookmark-info';
+
+                const icon = document.createElement('span');
+                icon.className = 'bookmark-icon';
+                icon.textContent = '📁';
+                info.appendChild(icon);
+
+                const details = document.createElement('div');
+                details.className = 'bookmark-details';
+
+                const title = document.createElement('div');
+                title.className = 'bookmark-title';
+                title.textContent = this.getRootDisplayName(key);
+                details.appendChild(title);
+
+                info.appendChild(details);
+
+                const actions = document.createElement('div');
+                actions.className = 'bookmark-actions';
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'action-btn';
+                toggleBtn.textContent = '▼';
+                toggleBtn.onclick = () => this.toggleFolder(li);
+                actions.appendChild(toggleBtn);
+
+                info.appendChild(actions);
+                li.appendChild(info);
+
+                // Children
+                if (root.children && root.children.length > 0) {
+                    const contents = document.createElement('div');
+                    contents.className = 'folder-contents';
+                    
+                    const childTree = document.createElement('ul');
+                    childTree.className = 'bookmark-tree';
+                    
+                    root.children.forEach(child => {
+                        const childElement = this.createBookmarkElement(child);
+                        childTree.appendChild(childElement);
+                    });
+                    
+                    contents.appendChild(childTree);
+                    li.appendChild(contents);
+                }
+
+                return li;
+            }
+
+            getRootDisplayName(key) {
+                const names = {
+                    'bookmark_bar': 'Bookmarks Bar',
+                    'other': 'Other Bookmarks',
+                    'synced': 'Mobile Bookmarks'
+                };
+                return names[key] || key;
+            }
+
+            calculateStats() {
+                let totalBookmarks = 0;
+                let totalFolders = 0;
+                let totalUrls = 0;
+                
+                const countItems = (children) => {
+                    if (!children) return;
+                    children.forEach(item => {
+                        totalBookmarks++;
+                        if (item.type === 'folder') {
+                            totalFolders++;
+                            countItems(item.children);
+                        } else {
+                            totalUrls++;
+                        }
+                    });
+                };
+                
+                Object.values(this.bookmarksData.roots).forEach(root => {
+                    if (root.children) {
+                        countItems(root.children);
+                    }
+                });
+                
+                document.getElementById('totalBookmarks').textContent = totalBookmarks;
+                document.getElementById('totalFolders').textContent = totalFolders;
+                document.getElementById('totalUrls').textContent = totalUrls;
+            }
+
+            createBookmarkElement(bookmark) {
+                const li = document.createElement('li');
+                li.className = `bookmark-item ${bookmark.type === 'folder' ? 'bookmark-folder' : ''}`;
+                li.dataset.id = bookmark.id;
+                li.draggable = true;
+
+                const info = document.createElement('div');
+                info.className = 'bookmark-info';
+
+                const icon = document.createElement('span');
+                icon.className = 'bookmark-icon';
+                icon.textContent = bookmark.type === 'folder' ? '📁' : '🔗';
+                info.appendChild(icon);
+
+                const details = document.createElement('div');
+                details.className = 'bookmark-details';
+
+                const title = document.createElement('div');
+                title.className = 'bookmark-title';
+                title.textContent = bookmark.name || 'Untitled';
+                details.appendChild(title);
+
+                if (bookmark.type === 'url' && bookmark.url) {
+                    const url = document.createElement('a');
+                    url.className = 'bookmark-url';
+                    url.href = bookmark.url;
+                    url.textContent = bookmark.url;
+                    url.target = '_blank';
+                    details.appendChild(url);
+                }
+
+                info.appendChild(details);
+
+                const actions = document.createElement('div');
+                actions.className = 'bookmark-actions';
+
+                if (bookmark.type === 'folder') {
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'action-btn';
+                    toggleBtn.textContent = '▼';
+                    toggleBtn.onclick = () => this.toggleFolder(li);
+                    actions.appendChild(toggleBtn);
+                }
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn';
+                editBtn.textContent = '✏️';
+                editBtn.onclick = () => this.editBookmark(li, bookmark);
+                actions.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.onclick = () => this.deleteBookmark(li, bookmark);
+                actions.appendChild(deleteBtn);
+
+                info.appendChild(actions);
+                li.appendChild(info);
+
+                // Edit form (hidden by default)
+                const editForm = this.createEditForm(bookmark);
+                li.appendChild(editForm);
+
+                // Children (for folders)
+                if (bookmark.type === 'folder' && bookmark.children && bookmark.children.length > 0) {
+                    const contents = document.createElement('div');
+                    contents.className = 'folder-contents';
+                    
+                    const childTree = document.createElement('ul');
+                    childTree.className = 'bookmark-tree';
+                    
+                    bookmark.children.forEach(child => {
+                        const childElement = this.createBookmarkElement(child);
+                        childTree.appendChild(childElement);
+                    });
+                    
+                    contents.appendChild(childTree);
+                    li.appendChild(contents);
+                }
+
+                // Drag and drop events
+                li.addEventListener('dragstart', (e) => {
+                    li.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', li.dataset.id);
+                });
+
+                li.addEventListener('dragend', () => {
+                    li.classList.remove('dragging');
+                });
+
+                li.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+
+                li.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    const draggedElement = document.querySelector(`[data-id="${draggedId}"]`);
+                    
+                    if (draggedElement && draggedElement !== li) {
+                        this.moveBookmark(draggedElement, li);
+                    }
+                });
+
+                return li;
+            }
+
+            createEditForm(bookmark) {
+                const form = document.createElement('div');
+                form.className = 'edit-form';
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.placeholder = 'Bookmark name';
+                nameInput.value = bookmark.name || '';
+                form.appendChild(nameInput);
+
+                if (bookmark.type === 'url') {
+                    const urlInput = document.createElement('input');
+                    urlInput.type = 'url';
+                    urlInput.placeholder = 'URL';
+                    urlInput.value = bookmark.url || '';
+                    form.appendChild(urlInput);
+                }
+
+                const actions = document.createElement('div');
+                actions.className = 'edit-form-actions';
+
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn btn-success';
+                saveBtn.textContent = 'Save';
+                saveBtn.onclick = () => this.saveEdit(form, bookmark);
+                actions.appendChild(saveBtn);
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-danger';
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.onclick = () => this.cancelEdit(form);
+                actions.appendChild(cancelBtn);
+
+                form.appendChild(actions);
+                return form;
+            }
+
+            toggleFolder(folderElement) {
+                folderElement.classList.toggle('collapsed');
+                const toggleBtn = folderElement.querySelector('.action-btn');
+                if (folderElement.classList.contains('collapsed')) {
+                    toggleBtn.textContent = '▶';
+                } else {
+                    toggleBtn.textContent = '▼';
+                }
+            }
+
+            editBookmark(element, bookmark) {
+                const form = element.querySelector('.edit-form');
+                form.classList.add('show');
+            }
+
+            saveEdit(form, bookmark) {
+                const inputs = form.querySelectorAll('input');
+                const nameInput = inputs[0];
+                const urlInput = inputs[1];
+
+                bookmark.name = nameInput.value.trim() || 'Untitled';
+                if (urlInput) {
+                    bookmark.url = urlInput.value.trim();
+                }
+
+                this.cancelEdit(form);
+                this.renderBookmarks();
+                this.calculateStats();
+            }
+
+            cancelEdit(form) {
+                form.classList.remove('show');
+            }
+
+            deleteBookmark(element, bookmark) {
+                const confirmMessage = this.testingMode 
+                    ? `[TESTING MODE] Delete "${bookmark.name}"? This is safe to test.`
+                    : `Are you sure you want to delete "${bookmark.name}"? This may be restored by Brave's auto-backup.`;
+                    
+                if (confirm(confirmMessage)) {
+                    this.removeBookmarkFromData(bookmark);
+                    element.remove();
+                    this.calculateStats();
+                }
+            }
+
+            removeBookmarkFromData(bookmarkToRemove) {
+                const removeFromChildren = (children) => {
+                    if (!children) return;
+                    for (let i = children.length - 1; i >= 0; i--) {
+                        if (children[i] === bookmarkToRemove) {
+                            children.splice(i, 1);
+                            return true;
+                        }
+                        if (children[i].children && removeFromChildren(children[i].children)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                Object.values(this.bookmarksData.roots).forEach(root => {
+                    removeFromChildren(root.children);
+                });
+            }
+
+            moveBookmark(draggedElement, targetElement) {
+                // Simple visual reordering - in a full implementation,
+                // you'd also update the data structure
+                if (targetElement.classList.contains('bookmark-folder')) {
+                    const contents = targetElement.querySelector('.folder-contents ul');
+                    if (contents) {
+                        contents.appendChild(draggedElement);
+                    }
+                } else {
+                    targetElement.parentNode.insertBefore(draggedElement, targetElement.nextSibling);
+                }
+            }
+
+            searchBookmarks(query) {
+                const items = document.querySelectorAll('.bookmark-item');
+                const searchTerm = query.toLowerCase().trim();
+
+                items.forEach(item => {
+                    const title = item.querySelector('.bookmark-title').textContent.toLowerCase();
+                    const url = item.querySelector('.bookmark-url');
+                    const urlText = url ? url.textContent.toLowerCase() : '';
+
+                    if (searchTerm === '' || title.includes(searchTerm) || urlText.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            expandAll() {
+                document.querySelectorAll('.bookmark-folder.collapsed').forEach(folder => {
+                    this.toggleFolder(folder);
+                });
+            }
+
+            collapseAll() {
+                document.querySelectorAll('.bookmark-folder:not(.collapsed)').forEach(folder => {
+                    this.toggleFolder(folder);
+                });
+            }
+
+            sortBookmarks() {
+                const sortChildren = (children) => {
+                    if (!children) return;
+                    children.sort((a, b) => {
+                        // Folders first, then alphabetical
+                        if (a.type === 'folder' && b.type !== 'folder') return -1;
+                        if (a.type !== 'folder' && b.type === 'folder') return 1;
+                        return (a.name || '').localeCompare(b.name || '');
+                    });
+                    children.forEach(child => {
+                        if (child.children) {
+                            sortChildren(child.children);
+                        }
+                    });
+                };
+
+                Object.values(this.bookmarksData.roots).forEach(root => {
+                    sortChildren(root.children);
+                });
+
+                this.renderBookmarks();
+            }
+
+            exportBookmarks(format = 'json') {
+                if (!this.bookmarksData) {
+                    alert('No bookmarks to export');
+                    return;
+                }
+
+                if (format === 'html') {
+                    this.exportAsHTML();
+                } else {
+                    this.exportAsJSON();
+                }
+            }
+
+            exportAsJSON() {
+                // Create a copy of the data and remove the checksum for Brave compatibility
+                const exportData = JSON.parse(JSON.stringify(this.bookmarksData));
+                if (exportData.checksum) {
+                    delete exportData.checksum;
+                }
+
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `brave-bookmarks-edited-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            exportAsHTML() {
+                const stats = this.calculateStatsData();
+                const bookmarksHTML = this.generateBookmarksHTML();
+                
+                const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookmarks - Exported from Brave</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .bookmarks-content {
+            padding: 30px;
+        }
+        .bookmark-folder {
+            margin-bottom: 25px;
+        }
+        .folder-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bookmark-list {
+            display: grid;
+            gap: 12px;
+            margin-left: 20px;
+        }
+        .bookmark-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.2s ease;
+        }
+        .bookmark-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .bookmark-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .bookmark-url {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        .bookmark-url:hover {
+            text-decoration: underline;
+        }
+        .export-info {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header h1 {
+                font-size: 2rem;
+            }
+            .bookmarks-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔖 My Bookmarks</h1>
+            <p>Exported from Brave Browser on ${new Date().toLocaleDateString()}</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">${stats.totalBookmarks}</span>
+                    <div class="stat-label">Total Bookmarks</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${stats.totalFolders}</span>
+                    <div class="stat-label">Folders</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${stats.totalUrls}</span>
+                    <div class="stat-label">URLs</div>
+                </div>
+            </div>
+        </div>
+        <div class="bookmarks-content">
+            ${bookmarksHTML}
+        </div>
+        <div class="export-info">
+            Generated by Brave Bookmarks Editor • ${new Date().toLocaleString()}
+        </div>
+    </div>
+</body>
+</html>`;
+
+                const dataBlob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `my-bookmarks-${new Date().toISOString().split('T')[0]}.html`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            calculateStatsData() {
+                let totalBookmarks = 0;
+                let totalFolders = 0;
+                let totalUrls = 0;
+                
+                const countItems = (children) => {
+                    if (!children) return;
+                    children.forEach(item => {
+                        totalBookmarks++;
+                        if (item.type === 'folder') {
+                            totalFolders++;
+                            countItems(item.children);
+                        } else {
+                            totalUrls++;
+                        }
+                    });
+                };
+                
+                Object.values(this.bookmarksData.roots).forEach(root => {
+                    if (root.children) {
+                        countItems(root.children);
+                    }
+                });
+                
+                return { totalBookmarks, totalFolders, totalUrls };
+            }
+
+            generateBookmarksHTML() {
+                let html = '';
+                
+                const renderFolder = (folder, isRoot = false) => {
+                    if (!folder.children || folder.children.length === 0) return '';
+                    
+                    let folderHTML = '';
+                    if (!isRoot) {
+                        folderHTML += `<div class="bookmark-folder">
+                            <div class="folder-title">📁 ${folder.name || 'Untitled Folder'}</div>
+                            <div class="bookmark-list">`;
+                    } else {
+                        folderHTML += `<div class="bookmark-list">`;
+                    }
+                    
+                    folder.children.forEach(item => {
+                        if (item.type === 'folder') {
+                            folderHTML += renderFolder(item);
+                        } else if (item.type === 'url' && item.url) {
+                            folderHTML += `<div class="bookmark-item">
+                                <div class="bookmark-title">${item.name || 'Untitled'}</div>
+                                <a href="${item.url}" class="bookmark-url" target="_blank">${item.url}</a>
+                            </div>`;
+                        }
+                    });
+                    
+                    folderHTML += `</div>`;
+                    if (!isRoot) {
+                        folderHTML += `</div>`;
+                    }
+                    
+                    return folderHTML;
+                };
+                
+                // Render each root folder
+                Object.entries(this.bookmarksData.roots).forEach(([key, root]) => {
+                    if (root.children && root.children.length > 0) {
+                        const folderName = key === 'bookmark_bar' ? 'Bookmarks Bar' : 
+                                          key === 'other' ? 'Other Bookmarks' : 
+                                          key === 'synced' ? 'Mobile Bookmarks' : root.name;
+                        
+                        html += `<div class="bookmark-folder">
+                            <div class="folder-title">📁 ${folderName}</div>
+                            ${renderFolder(root, true)}
+                        </div>`;
+                    }
+                });
+                
+                return html;
+            }
+
+            showControls() {
+                document.getElementById('controls').classList.add('show');
+                document.getElementById('stats').classList.add('show');
+            }
+        }
+
+        // Initialize the application
+        let editor;
+        document.addEventListener('DOMContentLoaded', () => {
+            editor = new BraveBookmarksEditor();
+        });
+
+        // Backup Management Functions
+        function showBackupManagement() {
+            document.getElementById('backupManagementModal').style.display = 'block';
+        }
+
+        function closeBackupManagement() {
+            document.getElementById('backupManagementModal').style.display = 'none';
+        }
+
+        // Future Upgrades Functions
+        function showFutureUpgrades() {
+            document.getElementById('futureUpgradesModal').style.display = 'block';
+        }
+
+        function closeFutureUpgrades() {
+            document.getElementById('futureUpgradesModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
