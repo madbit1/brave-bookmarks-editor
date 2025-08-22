@@ -142,3 +142,9 @@ MIT License - Feel free to use and modify as needed.
 ---
 
 **Important**: Always backup your original bookmarks file before making changes! Use Testing Mode for safe experimentation.
+
+### 🚀 Future Upgrades Preview
+- **Coming Soon Features**: Preview upcoming enhancements like dark mode, advanced search, and enhanced safety features
+- **Community Voting**: Vote on which features you'd like to see implemented first
+- **Feature Categories**: Enhanced Interface, Advanced Tools, Enhanced Safety, and Import/Export improvements
+- **Interactive Modal**: Easy-to-access popup from the main interface
