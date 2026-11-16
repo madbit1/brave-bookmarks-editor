@@ -148,3 +148,7 @@ MIT License - Feel free to use and modify as needed.
 - **Community Voting**: Vote on which features you'd like to see implemented first
 - **Feature Categories**: Enhanced Interface, Advanced Tools, Enhanced Safety, and Import/Export improvements
 - **Interactive Modal**: Easy-to-access popup from the main interface
+
+## Developer
+
+Developed by **Stylish Future Technologies**. Existing licences and third-party acknowledgements remain unchanged.
